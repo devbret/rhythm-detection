@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Timestamp Visualization</title>
+        <script src="https://d3js.org/d3.v6.min.js"></script>
+        <style>
+            .line {
+                stroke: black;
+                stroke-width: 2px;
+            }
+            .marker {
+                fill: #007bff;
+                cursor: pointer;
+            }
+            .marker:hover {
+                fill: #0056b3;
+            }
+            .tooltip {
+                position: absolute;
+                text-align: center;
+                padding: 8px;
+                background: #fff;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="timeline"></div>
+        <script>
+            d3.json('all_rhythm_data.json').then(function (allData) {
+                const svgWidth = 1000,
+                    svgHeight = 100;
+                const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+                const width = svgWidth - margin.left - margin.right;
+                const height = svgHeight - margin.top - margin.bottom;
+                Object.keys(allData).forEach(function (track, index) {
+                    const data = allData[track].onset_times;
+                    const svg = d3
+                        .select('#timeline')
+                        .append('div')
+                        .append('svg')
+                        .attr('width', svgWidth)
+                        .attr('height', svgHeight)
+                        .append('g')
+                        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+                    const timeScale = d3
+                        .scaleLinear()
+                        .domain([0, d3.max(data)])
+                        .range([0, width]);
+                    svg.append('line')
+                        .attr('x1', 0)
+                        .attr('y1', height / 2)
+                        .attr('x2', width)
+                        .attr('y2', height / 2)
+                        .attr('class', 'line');
+                    svg.selectAll('.marker')
+                        .data(data)
+                        .enter()
+                        .append('line')
+                        .attr('class', 'marker')
+                        .attr('x1', (d) => timeScale(d))
+                        .attr('y1', 0)
+                        .attr('x2', (d) => timeScale(d))
+                        .attr('y2', height)
+                        .attr('stroke-width', 1)
+                        .attr('stroke', 'magenta');
+                    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+                    svg.selectAll('.marker')
+                        .on('mouseover', function (event, d) {
+                            tooltip.transition().duration(200).style('opacity', 0.9);
+                            tooltip
+                                .html('Timestamp: ' + d.toFixed(2) + 's')
+                                .style('left', event.pageX + 'px')
+                                .style('top', event.pageY - 28 + 'px');
+                        })
+                        .on('mouseout', function (d) {
+                            tooltip.transition().duration(500).style('opacity', 0);
+                        });
+                });
+            });
+        </script>
+    </body>
+</html>
